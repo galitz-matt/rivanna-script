@@ -2,6 +2,7 @@
 # JKRollout - Jupyter kernel roll-out
 #
 # Ruoshi Sun
+# 2023-12-19 singularity -> apptainer
 # 2020-07-05
 
 if [[ $# -ne 2 && $# -ne 3 ]]; then
@@ -42,15 +43,17 @@ if [ -z "$DISPLAYNAME" ]; then
 fi
 
 # check if $SIF contains /bin/sh
+module purge
+ml apptainer
 print_stage "Inspecting $SIF"
-singularity inspect $SIFPATH 2>/dev/null
+apptainer inspect $SIFPATH 2>/dev/null
 if [ $? -eq 255 ]; then
     echo "Container may not have /bin/sh. Use singularity 3.6+."
 fi
 
 # check if $SIF contains kernel package
 print_stage "Checking $SIF for ipykernel"
-singularity exec $SIFPATH python -c "import ipykernel" &> /dev/null
+apptainer exec $SIFPATH python -c "import ipykernel" &> /dev/null
 if [ $? -ne 0 ]; then
     echo "Error: $SIF does not contain ipykernel"
     exit 1
@@ -85,14 +88,14 @@ cat > $DIR/$JSON <<EOF
 EOF
 
 if [ "$GPU" = true ]; then
-    EXEC="singularity exec --nv $SIFPATH python -m ipykernel \$@"
+    EXEC="apptainer exec --nv $SIFPATH python -m ipykernel \$@"
 else
-    EXEC="singularity exec $SIFPATH python -m ipykernel \$@"
+    EXEC="apptainer exec $SIFPATH python -m ipykernel \$@"
 fi
 
 cat > $DIR/$INIT <<EOF
 #!/bin/bash
-ml singularity
+ml apptainer
 $EXEC
 EOF
 

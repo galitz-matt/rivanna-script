@@ -1,0 +1,78 @@
+#!/bin/bash
+# fetch queue info for website
+# Ruoshi Sun
+# 2024-01-18
+
+CSV=qinfo.csv
+
+echo "Partition,Purpose,Max time / job,Max nodes / job,Max cores / job,Max cores / node,Default memory / core,Max memory / node / job,SU Charge Rate" > $CSV
+
+for p in standard parallel largemem gpu dev; do
+    # MaxTime, MaxNodes, DefMemPerCPU
+    eval $(scontrol show partition -o $p|tr ' ' '\n')
+
+    # MaxTime
+    case $p in
+    dev)
+        # assume time limit is X hours
+        MaxTime="$(echo $MaxTime | awk -F':' '{printf "%d", $1}') hour"
+        ;;
+    *)
+        # assume time limit is X days
+        MaxTime="$(echo $MaxTime | awk -F'-' '{printf "%d", $1}') days"
+        ;;
+    esac
+
+    DefMemPerCPU="$((DefMemPerCPU/1000))GB"
+
+    # MaxCoresPerJob
+    case $p in
+    standard)
+        MaxCoresPerJob=$(sacctmgr show qos -np $QoS | awk -F'|' '{sub("cpu=","",$17); print $17}')
+        ;;
+    gpu)
+        MaxCoresPerJob="$(sacctmgr show qos -np $QoS | awk -F'|' '{sub("gres/gpu=","",$20); print $20}')GPU"
+        ;;
+    *)
+        MaxCoresPerJob=$(sacctmgr show qos -np $QoS | awk -F'|' '{sub("cpu=","",$16); print $16}')
+        ;;
+    esac
+
+    # weka client takes 3 cores except parallel 
+    MaxCoresPerNode=$(sinfo -p $p -ho '%n %c'|sort -nk2|tail -1|awk '{print $2}')
+    case $p in
+    parallel) MaxCoresPerNode=$MaxCoresPerNode ;;
+    *) MaxCoresPerNode=$((MaxCoresPerNode - 3)) ;;
+    esac
+
+    # MaxMemPerNode
+    case $p in
+    standard)
+        MaxMemPerNode="$((MaxMemPerCPU * (MaxCoresPerJob+3) / 1024))GB"
+        ;;
+    largemem)
+        MaxMemPerNode="$((MaxMemPerCPU * MaxCoresPerJob / 1024))GB"
+        ;;
+    *)
+        MaxMemPerNode="$(sinfo -p $p -ho '%n %m'|sort -nk2|tail -1|awk '{printf "%d\n", $2/1024}')GB"
+        ;;
+    esac
+
+    # SU charge rate
+    case $p in
+    dev) SUCharge=0 ;;
+    gpu) SUCharge=3 ;;
+    *) SUCharge=1 ;;
+    esac
+
+    # Purpose
+    case $p in
+    standard) Purpose="For jobs on a single compute node" ;;
+    parallel) Purpose="For large parallel jobs on up to $MaxNodes nodes" ;;
+    largemem) Purpose="For memory intensive jobs" ;;
+    gpu) Purpose="For jobs using general purpose graphical processing units" ;;
+    dev) Purpose="For quick tests" ;;
+    esac
+
+    echo "$p,$Purpose,$MaxTime,$MaxNodes,$MaxCoresPerJob,$MaxCoresPerNode,$DefMemPerCPU,$MaxMemPerNode,$SUCharge" >>$CSV
+done

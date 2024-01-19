@@ -1,0 +1,32 @@
+#!/bin/bash
+# launch rstudio from the commandline
+# Ruoshi Sun
+# 2023-08-30
+module purge
+module load goolf rstudio-server
+
+read LOWERPORT UPPERPORT < /proc/sys/net/ipv4/ip_local_port_range
+while :; do
+    PORT="`shuf -i $LOWERPORT-$UPPERPORT -n 1`"
+    ss -lpn | grep -q ":$PORT " || break
+done
+echo "Instructions:
+1. run this script on OOD Desktop or FastX
+2. open Firefox
+3. in the address bar enter:
+localhost:$PORT
+"
+
+MYTMP=`mktemp -d`
+export RSTUDIO_CONFIG_DIR="$MYTMP"
+export XDG_DATA_HOME="$MYTMP/.data"
+export XDG_CACHE_HOME="$MYTMP/.cache"
+mkdir "$XDG_DATA_HOME" "$XDG_CACHE_HOME"
+export RS_LOG_DIR="$MYTMP/log"
+echo -e "provider=sqlite\\ndirectory=$MYTMP/db" >> "$MYTMP/db.conf"
+
+rserver --server-user="$USER"\
+        --database-config-file="$MYTMP/db.conf"\
+        --server-data-dir="$MYTMP/sdd"\
+        --secure-cookie-key-file="$MYTMP/secure-cookie-key"\
+        --server-daemonize=0 --www-port=$PORT

@@ -16,8 +16,6 @@ Created on Fri May  8 09:52:13 2020
 
 import pandas as pd
 import os
-# import matplotlib.pyplot as plt
-# from matplotlib.gridspec import GridSpec
 import sys
 
 
@@ -56,15 +54,6 @@ def lookup_school(df):
 
 
 uid_df = pd.read_csv(uidfile, names=["UserID", "Lastname", "Firstname", "Affiliation", "Status"])
-# uid_df.set_index([0]);
-# print (uid_df.head())
-
-# user_df = pd.read_csv(userfile, delimiter=',', header=None, names=["UserID","Active","CommonName","PhoneNumber","EmailAddress","DefaultAccount","Description","CreationTime","ModificationTime","Deleted","RequestId","TransactionId"])
-# print (user_df.head())
-
-# combined = pd.merge(user_df, uid_df, on='UserID', how='left', suffixes=('_left', '_right'))
-# print (combined.head())
-
 uid_df['School'] = uid_df.apply(lookup_school, axis=1)
 uid_df.to_csv(outputfile)
 print(uid_df)

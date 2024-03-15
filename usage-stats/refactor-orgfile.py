@@ -40,7 +40,7 @@ def main(organization_file: str) -> None:
 				if "-----" not in line:
 					organization, code = pattern.split(line.strip())
 					temp_file.write(
-						f"{organization} {lookup.get(code, code)}\n")  # consider change to comma separation to avoid domain specificity
+						f"{organization} {lookup.get(code, code)}\n")  
 	shutil.move(temp_file.name, organization_file)
 
 

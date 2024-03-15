@@ -30,5 +30,4 @@ echo ---------------------------------
 
 ldapreport.sh $USERIDS > $OUTPUTFILE
 
-ml anaconda
 mergeusers.py $OUTPUTFILE $OUTPUTPATH

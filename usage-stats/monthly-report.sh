@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# update condition to account for FILTER arg
 if [ "$#" -ne 5 ]; then
     echo "Usage: `basename $0` YYYY MM DAYS FILTER OUTPUTPATH"
     exit 1
@@ -9,7 +8,7 @@ fi
 SYEAR=$1
 SMONTH=$2
 DAYS=$3
-FILTER=$4 # new assignment
+FILTER=$4 
 OUTPUTPATH=$5
 
 SDAY=01
@@ -26,7 +25,6 @@ get-allocation-data.sh ${SYEAR} ${SMONTH} ${OUTPUTPATH}
 
 core-usage-report.sh ${FIRSTDAYMONTH}T00:00:00 ${LASTDAYMONTH}T23:59:59 corehours-${SYEAR}-${SMONTH}.csv $DAYS "${FILTER}" $OUTPUTPATH
 
-# filter cpurawtime>0 (5th column in corehours-${SYEAR}-${SMONTH}.csv, and get uids
 awk -F, '{ if ($2 > 0) print $1 }' ${OUTPUTPATH}/all/${SYEAR}-${SMONTH}/corehours-${SYEAR}-${SMONTH}-userSchool-all.csv | sort -u > ${OUTPUTPATH}/activeusers-UIDs-${SYEAR}-${SMONTH}.txt
 ldapreport.sh ${OUTPUTPATH}/activeusers-UIDs-${SYEAR}-${SMONTH}.txt > ${OUTPUTPATH}/activeusers-${SYEAR}-${SMONTH}.csv
 mergeusers.py ${OUTPUTPATH}/activeusers-${SYEAR}-${SMONTH}.csv ${OUTPUTPATH}

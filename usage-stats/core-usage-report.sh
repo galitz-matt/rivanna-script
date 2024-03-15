@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# change condition to account for FILTER argument
 if [ "$#" -ne 6 ]; then
     echo "Usage: `basename $0` YYYY-MM-DDThh:mm:ss YYYY-MM-DDThh:mm:ss outputfile days-in-period filter outputpath"
     exit 1
@@ -27,7 +26,6 @@ LABELS="${COLUMNS/"account%50"/Allocation}"
 LABELS="${LABELS/"jobname%30"/JobName}"
 echo "$LABELS" | tr \, \| > $CORE_USAGE_FILE
 TZ=UTC sacct -P -n -a -X -S ${START} -E ${END} -s ${STATES} --format=${COLUMNS} >> $CORE_USAGE_FILE
-# remove "|" characters in jobnames that conflict with the  "|" column delimiter 
 sed -i 's/chr.*slurm/chr slurm/g' $CORE_USAGE_FILE
 
 sinfo -N --format="%R|%N|%T|%c|%G" > $CAPACITY_FILE
@@ -36,10 +34,8 @@ sudo /opt/mam/current/bin/mam-list-accounts > $ALLOC_FILE
 /opt/mam/current/bin/mam-list-organizations > $ORG_FILE
 refactor-orgfile.py $ORG_FILE # refactor organization acronyms
 
-# fix MAM annotation
 sed -i 's/Health_Volunteer Volunteer sponsored/Health_Volunteer_Volunteer_sponsored/g' $ALLOC_FILE
 sed -i 's/Health_Volunteer Volunteer sponsored/Health_Volunteer_Volunteer_sponsored/g' $ORG_FILE
 
 # create summary
-# add FILTER argument to script call
 core-usage-summary.py -d $DAYS -c $CAPACITY_FILE -u $CORE_USAGE_FILE -x $ORG_FILE -a $ALLOC_FILE -l "$LABELS" -p "${OUTPUTPATH}/{FILTER}/${YYYYMM}" -o $OUT_FILE -g "PI,School|Allocation,Description,PI,School|Allocation,Description,PI,School,partition|School,Organization|user,School|Allocation,user,PI,School,Organization|user,Allocation,PI,School,Organization|School|School,JobType|School,partition|School,partition,JobType" -f "${FILTER}"

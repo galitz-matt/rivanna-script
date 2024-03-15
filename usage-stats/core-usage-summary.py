@@ -77,13 +77,13 @@ def partition_type(row):
 
 def get_pi(row):
 	members = row['Users']
-	pi = members.split("^")[-1].split(",")[0]  # re.search(r'\^(.*?)($|\,)', members).group(0)
+	pi = members.split("^")[-1].split(",")[0]  
 	return pi
 
 
 def merge_data(labels, usage_file, account_file, org_file, capacity_file, hours, groups=['Allocation']):
 	capacity_df = pd.read_csv(capacity_file, delimiter='|')
-	capacity_df['GPU devices'] = capacity_df.apply(lambda row: gpu_devices(row), axis=1) 
+	capacity_df['GPU devices'] = capacity_df.apply(lambda row: gpu_devices(row), axis=1)  
 	capacity_df = capacity_df.groupby(['PARTITION']).agg({"NODELIST": len, "CPUS": np.sum, "GPU devices": np.sum})
 	capacity_df['Core hours'] = capacity_df['CPUS'] * hours
 	capacity_df['GPU hours'] = capacity_df['GPU devices'] * hours
@@ -91,7 +91,7 @@ def merge_data(labels, usage_file, account_file, org_file, capacity_file, hours,
 	print(capacity_df)
 	capacity_df.to_csv(f"{capacity_file[:-4]}-summary.csv")
 
-	usage_df = pd.read_csv(usage_file, delimiter="|")  # r"\s+", names=labels) #, header=0, skiprows=7)
+	usage_df = pd.read_csv(usage_file, delimiter="|")  
 	usage_df['Total CPU hours'] = usage_df['cputimeraw'] / 3600
 	usage_df['GPU devices'] = usage_df['alloctres'].str.extract(r'gres/gpu=(\d+)').fillna(0).astype(
 		int)  
@@ -209,7 +209,7 @@ if __name__ == '__main__':
 		print(f'Analyzing by {r}, {groups}')
 		for filter in filters:
 			print (f"Filtering by {filter}")
-			sum_df = df.groupby(groups).sum().reset_index()  # does this need to be inside inner loop
+			sum_df = df.groupby(groups).sum().reset_index()  
 			ftrunk, ext = os.path.splitext(args.output)
 			# flatten filter values which is a list of lists
 			if list(filter.values())[0] is not None:
